@@ -1,0 +1,83 @@
+﻿Prompt
+You are an AI assistant helping with predictive modeling using clinical trial SDTM data (CDISC Pilot 01).
+I have SDTM data for the following domains in a folder named sdtm/: DM, DS, AE, EX, LB, VS, MH, QS — provided as either .xpt files (e.g. DM.xpt) or .csv files (e.g. DM.csv). The code should auto-detect and load whichever format is present for each domain.
+Environment & reproducibility requirements (apply to all three scripts):
+
+Execute the entire plan using exactly this environment — do not generate or rely on a separate requirements.txt/environment.yml file; just ensure these versions are the ones actually used at execution time:
+
+Python 3.12.3
+pandas==3.0.2
+numpy==2.4.4
+scikit-learn==1.8.0
+scipy==1.17.1
+pyreadstat==1.3.5
+
+
+Start each script with a short comment block documenting the Python version and package versions above, so it's clear what was used to produce the results, without needing a separate file.
+Set a single global constant RANDOM_SEED = 123 — this exact value, not a placeholder — defined once and imported/reused consistently across all three scripts.
+Fix every source of randomness using RANDOM_SEED = 123: numpy.random.seed(123), Python's random.seed(123), and every random_state= argument in pandas sampling, train_test_split, StratifiedKFold, IsolationForest, and SVC/GridSearchCV/logistic regression must be set to 123 (via the shared RANDOM_SEED constant, not a hardcoded literal repeated separately).
+Avoid any non-deterministic operations (e.g., unordered set/dict iteration affecting column order, multi-threaded nondeterminism) — sort columns/keys explicitly where order could vary, and set n_jobs=1 (or otherwise ensure determinism) for any parallelized model-fitting step.
+Before reporting any results, verify and state that RANDOM_SEED = 123 was the value actually used in execution (not merely defined).
+
+Please generate three Python scripts:
+(1) load_data.py
+
+Load each domain using pandas.read_sas(..., format="xport") for .xpt files or pandas.read_csv for .csv files, auto-detected by file extension.
+Clean column names to lowercase snake_case (equivalent to janitor::clean_names()).
+Convert all SDTM date fields ending in dtc to proper datetime64 objects using pandas.to_datetime() on the first 10 characters (ISO8601 YYYY-MM-DD).
+Apply conservative ISO8601 date imputation for AE start dates when AESTDY is missing (YYYY → YYYY-01-01, YYYY-MM → YYYY-MM-01).
+Remove screen-failure subjects based on ARM/ARMCD.
+Define discontinuation using DS: dsdecod or dsterm in a defined list of discontinuation terms.
+Identify randomized subjects using ARMCD.
+Merge discontinuation status into a cohort table.
+Return a dict named sdtm containing: dm, ds, ae, ex, lb, vs, mh, qs, cohort.
+
+(2) feature_engineering.py
+
+Use the sdtm dict from load_data.py.
+Build baseline features: demographics, baseline labs, baseline vitals, medical history, QS.
+Build time-varying features up to a cutoff window, where the cutoff (in weeks) is defined as the minimum weeks-to-discontinuation computed across discontinued subjects only (i.e., subjects with discont == 1 from the cohort table), excluding subjects whose DS dsterm equals 'PROTOCOL ENTRY CRITERIA NOT MET'. Weeks-to-discontinuation = (rfendtc - rfstdtc) in weeks. The resulting cutoff is floored at 0. This single cutoff value is then applied uniformly to all randomized subjects to define each subject's feature window (cutoff = rfstdtc + cutoff_weeks).
+Compute AE counts/severity, exposure totals, lab trends, vital sign trends, all restricted to records on or before each subject's cutoff date.
+Merge all features into a single features table.
+Add anomaly features using Isolation Forest (sklearn.ensemble.IsolationForest, seeded with RANDOM_SEED (123), n_jobs=1):
+
+Select numeric columns
+Remove zero-variance columns
+Median-impute missing values
+Scale features (StandardScaler)
+Fit isolation forest
+Add iso_score and iso_flag (normalized to [0,1], flag if >0.5)
+
+
+Return a dict containing the final features table and all intermediate feature tables.
+Print a short "key insight" summary: how many subjects were flagged as anomalous, and which baseline/time-varying features most distinguish flagged vs. non-flagged subjects.
+
+(3) modeling.py
+
+Load the engineered features.
+Split randomized subjects into development (70%) and holdout (30%) using a stratified split (sklearn.model_selection.train_test_split(..., stratify=..., random_state=RANDOM_SEED) where RANDOM_SEED=123), equivalent to caret::createDataPartition.
+Preprocess with a sklearn.pipeline.Pipeline/ColumnTransformer: median-impute numeric predictors, one-hot encode nominal predictors, drop zero-variance columns — fit on the development set only and applied unchanged to the holdout set.
+Logistic regression:
+
+Implement as a regularized logistic regression (sklearn.linear_model.LogisticRegressionCV with penalty="elasticnet", solver="saga", or LogisticRegression inside a GridSearchCV) to mirror glmnet's elastic-net behavior.
+Standardize numeric features before fitting (elastic-net regularization is scale-sensitive).
+Tune the regularization strength (and l1_ratio if using elastic-net) via StratifiedKFold(..., shuffle=True, random_state=123) cross-validation on the development set, using AUC as the selection metric.
+Fix random_state=123 on the estimator/solver where applicable (e.g. saga solver's stochastic behavior).
+Fit the final model on the full development set using the selected hyperparameters.
+
+
+SVM (RBF kernel):
+
+Train a cross-validated SVM using GridSearchCV/sklearn.svm.SVC(kernel="rbf", probability=True, random_state=123) with AUC as the scoring metric, using StratifiedKFold(..., shuffle=True, random_state=123) for reproducible fold assignment.
+
+
+Evaluation (applied identically to both models):
+
+Generate holdout-set predicted probabilities from each fitted model.
+Report AUC, PR-AUC, accuracy, sensitivity (recall), specificity, and the confusion matrix (using a 0.5 probability threshold) for logistic regression and SVM separately.
+Present results side-by-side in a single comparison table.
+
+
+Print a "key insight" summary at the end: best hyperparameters found for each model, top features driving predictions (e.g., logistic regression coefficients/odds ratios and SVM permutation importance on the holdout set), and a one-paragraph plain-language takeaway (e.g., which feature domain — labs, AEs, exposure — carries the most predictive signal for early discontinuation, and which model generalizes better).
+
+RANDOM_SEED = 123 must be fixed and identical across all three scripts — every seeded operation (numpy, random, and every random_state argument) uses this exact value — so the entire pipeline is exactly reproducible end-to-end on any machine, given the Python 3.12.3 / pandas==3.0.2 / numpy==2.4.4 / scikit-learn==1.8.0 / scipy==1.17.1 / pyreadstat==1.3.5 environment. Scripts should be fully runnable as-is, assuming the .xpt or .csv files are present in sdtm/. Fully execute this plan when data is provided. Also print the model evaluation results. 
