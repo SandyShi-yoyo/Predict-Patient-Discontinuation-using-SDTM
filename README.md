@@ -12,14 +12,16 @@ and model evaluation results.
 
 Repository contents
 ================================================================================
-  
-  prompt.txt                       The prompt provided to the Claude Sonnet 5 to generate the below codes 
-  python code test/config.py               Shared RANDOM_SEED (123) and determinism helpers
-  python code test/load_data.py             Step 1: load and clean the SDTM domains
-  python code test/feature_engineering.py   Step 2: build baseline + time-varying features
-  python code test/modeling.py               Step 3: train and evaluate the models
-  requirements.txt          Pinned package versions
-
+```bash
+project-root/
+├── prompt.txt                      #The prompt provided to the Claude Sonnet 5 to generate the below codes 
+├── python_code_test/
+│       ├── config.py                # Shared RANDOM_SEED (123) and determinism helpers
+│       ├── load_data.py             # Step 1: load and clean SDTM domains
+│       ├── feature_engineering.py   # Step 2: build baseline + time‑varying features
+│       └── modeling.py              # Step 3: train and evaluate the models
+└── requirements.txt                 # Pinned package versions
+```
 Environment (exact versions used to produce the results below)
 ================================================================================
 - **Python**: 3.12.3  
@@ -70,8 +72,7 @@ Both are used, and are combined into a single feature table per subject:
 - Medical history (count of conditions, count flagged "severe")
 - Baseline questionnaire/scale scores, QS (QSBLFL = 'Y', or earliest QSDTC with QSDY <= 1)
 
-**Time-varying** (accumulated after treatment start, up to a per-subject
-  cutoff date -- see below):
+**Time-varying** (accumulated after treatment start, up to a per-subject cutoff date):
 - Adverse events: count, number serious, maximum severity
 - Exposure: total dose administered, number of dosing days
 - Lab trends: mean/max/min for each lab test
