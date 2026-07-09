@@ -1,4 +1,3 @@
-================================================================================
 Predicting Early Discontinuation in a Clinical Trial (CDISC Pilot 01 SDTM)
 ================================================================================
 
@@ -45,7 +44,6 @@ How to run the python code
   3. python modeling.py
      (this internally calls load_data.py and feature_engineering.py)
 
-================================================================================
 METHODOLOGY
 ================================================================================
 
@@ -164,7 +162,6 @@ attribution methods appropriate to each model type:
     AUC drop = more important feature. This is a model-agnostic,
     post-hoc attribution method, not an intrinsic property of the SVM.
 
-================================================================================
 RESULTS
 ================================================================================
 
@@ -224,7 +221,6 @@ Anomaly detection (Isolation Forest, over the full combined feature table):
   (qs_NPTOT, qs_NPITM06F, qs_NPITM03S, qs_ACTOT, and others, |effect size|
   ~= 1.0-1.3).
 
-================================================================================
 CONCLUSIONS
 ================================================================================
 
@@ -278,7 +274,6 @@ CONCLUSIONS
   should be read as a proof-of-concept pipeline rather than a
   clinically validated early-warning model.
 
-================================================================================
 Reproducibility note
 ================================================================================
 All results above were generated with RANDOM_SEED = 123 (config.py) under
