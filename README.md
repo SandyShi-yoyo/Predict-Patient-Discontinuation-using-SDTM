@@ -11,7 +11,7 @@ Claude Sonnet 5 should allow the user to fully execute the plan and print key su
 and model evaluation results. 
 
 Repository contents
---------------------------------------------------------------------------
+================================================================================
   
   prompt.txt                       The prompt provided to the Claude Sonnet 5 to generate the below codes 
   python code test/config.py               Shared RANDOM_SEED (123) and determinism helpers
@@ -21,13 +21,13 @@ Repository contents
   requirements.txt          Pinned package versions
 
 Environment (exact versions used to produce the results below)
---------------------------------------------------------------------------
-  Python        3.12.3
-  pandas        3.0.2
-  numpy         2.4.4
-  scikit-learn  1.8.0
-  scipy         1.17.1
-  pyreadstat    1.3.5
+================================================================================
+- **Python**: 3.12.3  
+- **pandas**: 3.0.2  
+- **numpy**: 2.4.4  
+- **scikit-learn**: 1.8.0  
+- **scipy**: 1.17.1  
+- **pyreadstat**: 1.3.5
 
 RANDOM_SEED = 123 is defined once in config.py and reused for every seeded
 operation across all three scripts (numpy, random, train/holdout split,
@@ -36,7 +36,7 @@ solver used by LogisticRegressionCV), so the pipeline is exactly
 reproducible end-to-end given this environment.
 
 How to run the python code
---------------------------------------------------------------------------
+================================================================================
   1. Place the SDTM domain files (.xpt or .csv) in a folder named "sdtm/"
      next to these scripts.
   2. pip install pandas==3.0.2 numpy==2.4.4 scikit-learn==1.8.0
@@ -48,7 +48,7 @@ METHODOLOGY
 ================================================================================
 
 1. Cohort definition
---------------------------------------------------------------------------
+
 Screen-failure subjects (ARM == "Screen Failure") are removed. Randomized
 subjects are those with a non-missing ARMCD. It is assumed that the 
 randomization information are available.  A subject is labeled
@@ -60,24 +60,22 @@ SUBJECT. All other randomized subjects are labeled discont = 0.
 Resulting cohort: 254 randomized subjects (144 discontinued, 110 completed).
 
 2. Baseline vs. time-varying information
---------------------------------------------------------------------------
+
 Both are used, and are combined into a single feature table per subject:
 
-  Baseline (fixed at/near study entry):
-    - Demographics (age, sex, race, country, site)
-    - Baseline labs (LBBLFL = 'Y', or earliest LBDTC with LBDY <= 1 if no
-      baseline flag is present)
-    - Baseline vitals (VSBLFL = 'Y', by test and time point)
-    - Medical history (count of conditions, count flagged "severe")
-    - Baseline questionnaire/scale scores, QS (QSBLFL = 'Y', or earliest
-      QSDTC with QSDY <= 1)
+**Baseline** (fixed at/near study entry):
+- Demographics (age, sex, race, country, site)
+- Baseline labs (LBBLFL = 'Y', or earliest LBDTC with LBDY <= 1 if no baseline flag is present)
+- Baseline vitals (VSBLFL = 'Y', by test and time point)
+- Medical history (count of conditions, count flagged "severe")
+- Baseline questionnaire/scale scores, QS (QSBLFL = 'Y', or earliest QSDTC with QSDY <= 1)
 
-  Time-varying (accumulated after treatment start, up to a per-subject
+**Time-varying** (accumulated after treatment start, up to a per-subject
   cutoff date -- see below):
-    - Adverse events: count, number serious, maximum severity
-    - Exposure: total dose administered, number of dosing days
-    - Lab trends: mean/max/min for each lab test
-    - Vital-sign trends: mean/max/min for each vital-sign test
+- Adverse events: count, number serious, maximum severity
+- Exposure: total dose administered, number of dosing days
+- Lab trends: mean/max/min for each lab test
+- Vital-sign trends: mean/max/min for each vital-sign test
 
   Anomaly-detection features (derived from the combined table): an
   Isolation Forest anomaly score/flag (iso_score, iso_flag) computed over
@@ -85,23 +83,25 @@ Both are used, and are combined into a single feature table per subject:
   score/flag computed on the AE features alone (isoae_score, isoae_flag).
 
 3. Time-varying cutoff window
---------------------------------------------------------------------------
-Yes -- a single cutoff window (in weeks after RFSTDTC, each subject's
+
+A single cutoff window (in weeks after RFSTDTC, each subject's
 reference start date) is applied uniformly to every randomized subject, so
 that the same "look-back horizon" is used for everyone and no subject's
 features can peek past the point where the earliest true discontinuation in
-the data actually occurred. Concretely:
+the data actually occurred. 
+There is no need to Concretely:
 
-  cutoff_weeks = MIN( (RFENDTC - RFSTDTC) in weeks ),
-                 taken ONLY over subjects with discont == 1, EXCLUDING any
-                 subject whose DS dsterm == 'PROTOCOL ENTRY CRITERIA NOT MET'
-                 (these are early exclusions/screen-fail-adjacent subjects,
-                 not genuine on-treatment discontinuations, so they are
-                 excluded from the cutoff calculation to avoid an
-                 artificially short window).
-  cutoff_weeks = max(cutoff_weeks, 0)   [floored at 0]
+- **cutoff_weeks**
+  = MIN( (RFENDTC - RFSTDTC) in weeks ),
+  taken ONLY over subjects with discont == 1, EXCLUDING any
+  subject whose DS dsterm == 'PROTOCOL ENTRY CRITERIA NOT MET'
+  (these are early exclusions/screen-fail-adjacent subjects,
+  not genuine on-treatment discontinuations, so they are
+  excluded from the cutoff calculation to avoid an
+  artificially short window).
+- **cutoff_weeks = max(cutoff_weeks, 0)**   [floored at 0]
 
-  cutoff_date(subject) = RFSTDTC(subject) + cutoff_weeks
+- **cutoff_date(subject)** = RFSTDTC(subject) + cutoff_weeks
 
 For this run, cutoff_weeks = 0.57 weeks (~4 days). All AE, EX, LB, and VS
 records used for time-varying features are restricted to
@@ -112,7 +112,7 @@ practically actionable signal rather than on data that would only be
 available after some subjects had already left the study.
 
 4. Outcome type: binary vs. time-to-event
---------------------------------------------------------------------------
+
 Discontinuation is treated as a BINARY outcome (discont: 0/1), not a
 time-to-event outcome. No censoring, hazard, or survival model
 (Cox/Kaplan-Meier/etc.) is used; the question the models answer is
@@ -123,13 +123,15 @@ hazards model on the same cutoff-window features) would handle more
 rigorously and could be a natural extension of this project.
 
 5. Models
---------------------------------------------------------------------------
+
 Two models are trained on identical preprocessed features and compared:
 
-  a) Elastic-net logistic regression (sklearn LogisticRegressionCV,
+a) **Elastic-net logistic regression** (sklearn LogisticRegressionCV,
      solver="saga", 5-fold stratified CV over regularization strength C and
      l1_ratio in {0.1, 0.5, 0.9}, selected by CV AUC).
-  b) RBF-kernel SVM (sklearn SVC, 3-fold stratified CV grid search over
+
+
+b) **RBF-kernel SVM** (sklearn SVC, 3-fold stratified CV grid search over
      C in {0.5, 1, 2} and gamma in {"scale", "auto"}, selected by CV AUC).
 
 Preprocessing (fit on the development set only, applied unchanged to
@@ -142,7 +144,7 @@ the outcome (177 development / 77 holdout; holdout: 44 discontinued / 33
 completed).
 
 6. Explainability
---------------------------------------------------------------------------
+
 Yes, both models are explainable, using two different but complementary
 attribution methods appropriate to each model type:
 
