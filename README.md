@@ -164,7 +164,29 @@ attribution methods appropriate to each model type:
 
 RESULTS
 ================================================================================
-<img width="461" height="302" alt="image" src="https://github.com/user-attachments/assets/2896d09e-6dc4-4950-ba1d-2e3fd1834e39" />
+Holdout-set evaluation (n = 77; 44 discontinued / 33 completed):
+
+| Model     | AUC   | PR-AUC | Accuracy | Sensitivity | Specificity |
+|-----------|-------|--------|----------|-------------|-------------|
+| Logistic  | 0.655 | 0.715  | 0.649    | 0.864       | 0.364       |
+| SVM (RBF) | 0.576 | 0.635  | 0.584    | 0.977       | 0.061       |
+
+Confusion matrix (rows = truth, columns = predicted;  
+0 = completed, 1 = discontinued)
+
+| Truth \ Pred | Pred:0 | Pred:1 |
+|--------------|--------|--------|
+| Truth:0      |   12   |   21   |
+| Truth:1      |    6   |   38   |
+
+Confusion matrix (rows = truth, columns = predicted;  
+0 = completed, 1 = discontinued)
+
+| Truth \ Pred | Pred:0 | Pred:1 |
+|--------------|--------|--------|
+| Truth:0      |    2   |   31   |
+| Truth:1      |    1   |   43   |
+
 
 Best hyperparameters:
   Logistic regression: C = 0.0127, l1_ratio = 0.1 (i.e., regularization is
