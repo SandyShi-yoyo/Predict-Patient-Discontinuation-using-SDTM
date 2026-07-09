@@ -1,0 +1,10 @@
+# Python version used to build/validate this pipeline: 3.12.3
+# Install with: pip install -r requirements.txt
+# For fully pinned, byte-for-byte reproducibility across machines, install
+# inside a clean virtual environment (venv/conda) using these exact versions.
+
+pandas==3.0.2
+numpy==2.4.4
+scikit-learn==1.8.0
+scipy==1.17.1
+pyreadstat==1.3.5
