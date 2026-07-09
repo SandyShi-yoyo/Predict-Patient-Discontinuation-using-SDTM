@@ -164,24 +164,7 @@ attribution methods appropriate to each model type:
 
 RESULTS
 ================================================================================
-
-Holdout-set evaluation (n = 77; 44 discontinued / 33 completed):
-
-  model      AUC     PR-AUC   Accuracy  Sensitivity  Specificity
-  --------   ------   ------   --------   -----------   -----------
-  logistic   0.655    0.715    0.649      0.864         0.364
-  svm        0.576    0.635    0.584      0.977         0.061
-
-Confusion matrix - logistic regression (rows = truth, cols = predicted;
-0 = completed, 1 = discontinued):
-              pred:0   pred:1
-    truth:0     12       21
-    truth:1      6       38
-
-Confusion matrix - SVM (RBF):
-              pred:0   pred:1
-    truth:0      2       31
-    truth:1      1       43
+<img width="461" height="302" alt="image" src="https://github.com/user-attachments/assets/2896d09e-6dc4-4950-ba1d-2e3fd1834e39" />
 
 Best hyperparameters:
   Logistic regression: C = 0.0127, l1_ratio = 0.1 (i.e., regularization is
